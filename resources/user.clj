@@ -3,21 +3,24 @@
 ;; This namespace is loaded automatically by nREPL
 
 ;; read project.clj to get build configs
-(def profiles (->> "project.clj"
-                   slurp
-                   read-string
-                   (drop-while #(not= % :profiles))
-                   (apply hash-map)
-                   :profiles))
 
-(def cljs-builds (get-in profiles [:dev :cljsbuild :builds]))
+(def project-config (->> "project.clj"
+                         slurp
+                         read-string
+                         (drop-while #(not= % (or :figwheel :profiles)))
+                         (apply hash-map)))
+
+(def cljs-builds (get-in project-config [:profiles :dev :cljsbuild :builds]))
+(def figwheel-options (get project-config :figwheel {}))
 
 (defn start-figwheel
       "Start figwheel for one or more builds"
       [& build-ids]
       (ra/start-figwheel!
         {:build-ids  build-ids
-         :all-builds cljs-builds})
+         :all-builds cljs-builds
+         :figwheel-options figwheel-options
+         })
       (ra/cljs-repl))
 
 (defn stop-figwheel
